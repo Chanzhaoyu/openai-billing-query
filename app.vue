@@ -96,7 +96,7 @@
     </div>
     <div class="fixed -translate-x-1/2 bottom-2 left-1/2">
       Powered by
-      <a class="link link-accent" href="https://github.com/Chanzhaoyu" target="_blank">Chanzhaoyu (GitHub)</a>
+      <a class="link link-accent" href="https://github.com/Chanzhaoyu/openai-billing-query" target="_blank">Chanzhaoyu (GitHub)</a>
     </div>
   </div>
 </template>
