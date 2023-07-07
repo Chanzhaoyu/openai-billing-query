@@ -1,19 +1,19 @@
 <template>
-  <div class="p-4 pb-10 min-h-screen bg-[#01031d] text-white">
+  <div class="p-4 pb-8 min-h-screen bg-[#01031d] text-white">
     <div class="max-w-screen-xl m-auto">
       <main class="space-y-4">
         <h1 class="my-8 text-3xl font-bold text-center">OpenAI Key 授信查询</h1>
         <div class="flex items-center justify-between">
           <h2 class="text-xl">
-            输入 API KEY
-            <span class="ml-2 text-base text-slate-500"> 本站不保存 KEY 信息，查询后请自行保存 </span>
+            输入 API Key
+            <span class="ml-2 text-sm text-slate-400"> 本站不会保存 Key 信息，查询后请自行保存 </span>
           </h2>
           <button v-if="apiKeyInput.length > 0" class="btn btn-xs btn-outline btn-error" @click="handleClear">清空</button>
         </div>
         <div>
           <textarea
             v-model.trim="apiKeyInput"
-            placeholder="请输入 API-KEY，必须包含 sk-，查询多个请换行"
+            placeholder="请输入 API Key，必须包含 sk-，查询多个请换行"
             class="w-full textarea textarea-bordered textarea-lg text-slate-700"
             @blur="filterKeys"
           />
@@ -34,7 +34,7 @@
         </div>
         <h2 class="text-xl">
           查询线路
-          <span class="ml-2 text-base text-slate-500"> 支持自定义线路，官网线路需要魔法 </span>
+          <span class="ml-2 text-sm text-slate-400"> 支持自定义线路，官网线路需要魔法 </span>
         </h2>
         <div>
           <select v-model="line" :disabled="loading" class="w-full max-w-xs select select-bordered text-slate-700">
@@ -70,7 +70,7 @@
                 <tbody>
                   <tr v-for="(item, index) of checkArray" :key="index">
                     <td>{{ index + 1 }}</td>
-                    <td>{{ keyHidden(item.key) }}</td>
+                    <td :title="item.key">{{ keyHidden(item.key) }}</td>
                     <td>
                       <span class="loading loading-spinner" v-if="item.loading"></span>
                       <template v-else>
@@ -78,8 +78,11 @@
                         <span v-else>未检测</span>
                       </template>
                     </td>
-                    <template v-if="typeof item.error === 'string' && item.error.trim() !== ''">
-                      <td colspan="7">{{ item.error }}</td>
+                    <template v-if="typeof item.isError === 'string' && item.isError.trim() !== ''">
+                      <td class="text-red-500" colspan="7">
+                        {{ item.isError }}
+                        <a class="link link-accent" href="https://platform.openai.com/" target="_blank"> OpenAI</a>
+                      </td>
                     </template>
                     <template v-else>
                       <td>{{ item.totalAmount }}</td>
@@ -88,7 +91,7 @@
                       <td>{{ item.expiryDate }}</td>
                       <td>{{ item.checked ? (item.hasGPT4 ? "Yes" : "No") : "" }}</td>
                       <td>{{ item.checked ? (item.isBindCard ? "Yes" : "No") : "" }}</td>
-                      <td>{{ item.organizationId }}</td>
+                      <td :title="item.organizationId">{{ organizationHidden(item.organizationId) }}</td>
                     </template>
                   </tr>
                 </tbody>
@@ -106,6 +109,8 @@
 </template>
 
 <script setup lang="ts">
+import { strict } from "assert";
+
 interface KeyItem {
   key: string;
   loading: boolean;
@@ -117,7 +122,7 @@ interface KeyItem {
   isBindCard?: boolean;
   remaining?: number | string;
   organizationId?: string;
-  error?: string;
+  isError?: string;
 }
 
 const apiKeyInput = ref<string>("");
@@ -126,11 +131,11 @@ const line = ref<"OpenAI" | "Proxy">("OpenAI");
 
 const proxyUrl = ref<string>("");
 
-const checkArray = ref<KeyItem[]>([]);
-
-const loading = computed<boolean>(() => {
-  return checkArray.value.some((item) => (item.loading = true));
+const loading = computed(() => {
+  return checkArray.value.some((item) => item.loading);
 });
+
+const checkArray = ref<KeyItem[]>([]);
 
 function filterKeys() {
   const keys = apiKeyInput.value.split(/[,\s，\n]+/).filter((key) => key.startsWith("sk-"));
@@ -152,8 +157,13 @@ function keyHidden(apiKey: string) {
   return apiKey.replace(/^(sk-[a-zA-Z0-9]{4})[a-zA-Z0-9]*(.{6})$/, "$1***$2");
 }
 
+function organizationHidden(organization?: string){
+  if(!organization) return organization;
+  return organization.replace(/^(org-[a-zA-Z0-9]{4})[a-zA-Z0-9]*(.{6})$/, "$1***$2");
+}
+
 function handleClose(index: number) {
-  if (loading.value) return window.alert('正在查询中，请稍后再试！');
+  if (loading.value) return;
   checkArray.value.splice(index, 1);
 }
 
@@ -165,6 +175,7 @@ function handleClear() {
 async function handleQuery() {
   if (loading.value) return;
 
+  // 清空之前的查询结果
   checkArray.value = [];
 
   // 进行匹配
@@ -228,7 +239,8 @@ async function checkBilling(keyItem: KeyItem, apiUrl: string) {
     keyItem.loading = true;
     let response = await fetch(urlSubscription, { headers });
     if (!response.ok) {
-      keyItem.error = "API KEY 错误或账号被封，请登录 OpenAI 查看。";
+      keyItem.isError = "API KEY 错误或账号被封，请登录 OpenAI 查看。";
+      keyItem.loading = false;
       return;
     }
 
@@ -275,7 +287,7 @@ async function checkBilling(keyItem: KeyItem, apiUrl: string) {
 
     return Promise.resolve();
   } catch (error) {
-    keyItem.error = '请求出错'
+    keyItem.isError = "查询出现错误";
     return Promise.reject(error);
   } finally {
     keyItem.checked = true;
