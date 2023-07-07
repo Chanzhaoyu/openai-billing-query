@@ -3,6 +3,7 @@
     "daisyui",
     "nuxt",
     "nuxtjs",
+    "openai",
     "payg",
     "tailwindcss"
   ]
