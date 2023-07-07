@@ -1,5 +1,5 @@
 <template>
-  <div class="p-4 pb-6 min-h-screen bg-[#01031d] text-white">
+  <div class="p-4 pb-10 min-h-screen bg-[#01031d] text-white">
     <div class="max-w-screen-xl m-auto">
       <main class="space-y-4">
         <h1 class="my-8 text-3xl font-bold text-center">OpenAI Key 授信查询</h1>
@@ -37,7 +37,7 @@
           <span class="ml-2 text-base text-slate-500"> 支持自定义线路，官网线路需要魔法 </span>
         </h2>
         <div>
-          <select v-model="line" class="w-full max-w-xs select select-bordered text-slate-700">
+          <select v-model="line" :disabled="loading" class="w-full max-w-xs select select-bordered text-slate-700">
             <option value="OpenAI">官方线路</option>
             <option value="Proxy">自定义</option>
           </select>
@@ -45,9 +45,8 @@
         <div v-if="line === 'Proxy'">
           <input v-model.trim="proxyUrl" type="text" placeholder="输入自定义API，默认使用 https 协议" class="w-full input input-bordered text-slate-700" />
         </div>
-        <button class="btn btn-active btn-primary btn-block" :disabled="loading" @click="handleQuery">
-          <span class="loading loading-spinner" v-if="loading"></span>
-          查询
+        <button class="btn btn-active btn-primary btn-block" @click="handleQuery">
+          {{ loading ? "查询中..." : "查询" }}
         </button>
         <div class="space-y-4" v-if="checkArray.length > 0">
           <h2 class="text-xl">查询结果</h2>
@@ -79,13 +78,18 @@
                         <span v-else>未检测</span>
                       </template>
                     </td>
-                    <td>{{ item.totalAmount }}</td>
-                    <td>{{ item.totalUsage }}</td>
-                    <td>{{ item.remaining }}</td>
-                    <td>{{ item.expiryDate }}</td>
-                    <td>{{ item.checked ? (item.hasGPT4 ? "Yes" : "No") : "" }}</td>
-                    <td>{{ item.checked ? (item.isBindCard ? "Yes" : "No") : "" }}</td>
-                    <td>{{ item.organizationId }}</td>
+                    <template v-if="typeof item.error === 'string' && item.error.trim() !== ''">
+                      <td colspan="7">{{ item.error }}</td>
+                    </template>
+                    <template v-else>
+                      <td>{{ item.totalAmount }}</td>
+                      <td>{{ item.totalUsage }}</td>
+                      <td>{{ item.remaining }}</td>
+                      <td>{{ item.expiryDate }}</td>
+                      <td>{{ item.checked ? (item.hasGPT4 ? "Yes" : "No") : "" }}</td>
+                      <td>{{ item.checked ? (item.isBindCard ? "Yes" : "No") : "" }}</td>
+                      <td>{{ item.organizationId }}</td>
+                    </template>
                   </tr>
                 </tbody>
               </table>
@@ -94,9 +98,9 @@
         </div>
       </main>
     </div>
-    <div class="fixed -translate-x-1/2 bottom-2 left-1/2">
-      Powered by
-      <a class="link link-accent" href="https://github.com/Chanzhaoyu/openai-billing-query" target="_blank">Chanzhaoyu (GitHub)</a>
+    <div class="absolute w-full bottom-2 left-0 text-center">
+      GitHub
+      <a class="link link-accent" href="https://github.com/Chanzhaoyu/openai-billing-query" target="_blank">Chanzhaoyu</a>
     </div>
   </div>
 </template>
@@ -113,6 +117,7 @@ interface KeyItem {
   isBindCard?: boolean;
   remaining?: number | string;
   organizationId?: string;
+  error?: string;
 }
 
 const apiKeyInput = ref<string>("");
@@ -121,9 +126,11 @@ const line = ref<"OpenAI" | "Proxy">("OpenAI");
 
 const proxyUrl = ref<string>("");
 
-const loading = ref(false);
-
 const checkArray = ref<KeyItem[]>([]);
+
+const loading = computed<boolean>(() => {
+  return checkArray.value.some((item) => (item.loading = true));
+});
 
 function filterKeys() {
   const keys = apiKeyInput.value.split(/[,\s，\n]+/).filter((key) => key.startsWith("sk-"));
@@ -146,6 +153,7 @@ function keyHidden(apiKey: string) {
 }
 
 function handleClose(index: number) {
+  if (loading.value) return window.alert('正在查询中，请稍后再试！');
   checkArray.value.splice(index, 1);
 }
 
@@ -155,6 +163,8 @@ function handleClear() {
 }
 
 async function handleQuery() {
+  if (loading.value) return;
+
   checkArray.value = [];
 
   // 进行匹配
@@ -196,9 +206,6 @@ async function checkBilling(keyItem: KeyItem, apiUrl: string) {
   const before90Days = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
   const after24Hours = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
-  // 当月第一天
-  const monthFirstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-
   let startDate = formatDate(before90Days);
   let endDate = formatDate(after24Hours);
 
@@ -221,7 +228,7 @@ async function checkBilling(keyItem: KeyItem, apiUrl: string) {
     keyItem.loading = true;
     let response = await fetch(urlSubscription, { headers });
     if (!response.ok) {
-      window.alert("API KEY 错误或账号被封，请登录 OpenAI 查看。");
+      keyItem.error = "API KEY 错误或账号被封，请登录 OpenAI 查看。";
       return;
     }
 
@@ -268,6 +275,7 @@ async function checkBilling(keyItem: KeyItem, apiUrl: string) {
 
     return Promise.resolve();
   } catch (error) {
+    keyItem.error = '请求出错'
     return Promise.reject(error);
   } finally {
     keyItem.checked = true;
