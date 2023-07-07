@@ -3,6 +3,7 @@
     "daisyui",
     "nuxt",
     "nuxtjs",
+    "payg",
     "tailwindcss"
   ]
 }
