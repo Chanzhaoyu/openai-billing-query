@@ -124,8 +124,8 @@
       </main>
     </div>
     <div class="absolute left-0 w-full text-center bottom-2">
-      GitHub
-      <a class="link link-accent" href="https://github.com/Chanzhaoyu/openai-billing-query" target="_blank">Chanzhaoyu</a>
+      Chanzhaoyu
+      <a class="link link-accent" href="https://github.com/Chanzhaoyu/openai-billing-query" target="_blank">GitHub</a>
     </div>
   </div>
 </template>
