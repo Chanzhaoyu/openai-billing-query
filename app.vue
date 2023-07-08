@@ -1,5 +1,5 @@
 <template>
-  <div class="p-4 pb-8 min-h-screen bg-[#01031d] text-white">
+  <div class="p-4 min-h-screen bg-[#01031d] text-white">
     <div class="max-w-screen-xl m-auto">
       <main class="space-y-4">
         <h1 class="my-8 text-3xl font-bold text-center">OpenAI Key 查询</h1>
@@ -123,7 +123,7 @@
         </div>
       </main>
     </div>
-    <div class="absolute left-0 w-full text-center bottom-2">
+    <div class="mt-10 text-sm text-center opacity-70">
       Chanzhaoyu
       <a class="link link-accent" href="https://github.com/Chanzhaoyu/openai-billing-query" target="_blank">GitHub</a>
     </div>
