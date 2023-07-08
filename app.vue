@@ -2,7 +2,7 @@
   <div class="p-4 pb-8 min-h-screen bg-[#01031d] text-white">
     <div class="max-w-screen-xl m-auto">
       <main class="space-y-4">
-        <h1 class="my-8 text-3xl font-bold text-center">OpenAI Key 授信查询</h1>
+        <h1 class="my-8 text-3xl font-bold text-center">OpenAI Key 查询</h1>
         <div class="flex items-center justify-between">
           <h2 class="text-xl">
             输入 API Key
