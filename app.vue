@@ -137,8 +137,6 @@
 </template>
 
 <script setup lang="ts">
-import { strict } from "assert";
-
 interface KeyItem {
   key: string;
   loading: boolean;
